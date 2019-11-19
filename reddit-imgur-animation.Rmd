@@ -1,0 +1,116 @@
+---
+title: "Reddit Imgur Animation"
+author: "Max Woolf (@minimaxir)"
+date: "2019-11-11"
+
+---
+
+## Setup
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(gganimate)
+
+sessionInfo()
+```
+
+```{r}
+theme_set(theme_minimal(base_size=9, base_family="Source Sans Pro") +
+            theme(plot.title = element_text(family="Source Sans Pro Bold", margin=margin(t = -0.1, b = 0.1, unit='cm'), size=12),
+                  axis.title.x = element_text(),
+                  axis.title.y = element_text(),
+                  axis.text.y = element_text(family="Roboto Condensed"),
+                  axis.text.x = element_text(family="Roboto Condensed"),
+                  plot.subtitle = element_text(family="Source Sans Pro Semibold", color="#969696", size=8),
+                  plot.caption = element_text(color="#969696"),
+                  legend.title = element_text(),
+                  legend.key.width = unit(0.25, unit='cm')))
+```
+
+Manually specify the colors and order for each level. Colors adapted from the [Flat UI Colors](https://flatuicolors.com/palette/defo) palette.
+
+```{r}
+fill_colors <- c(
+  "Reddit" = "#d35400",
+  "Imgur" = "#27ae60",
+  "Gfycat" = "#16a085",
+  "Giphy" = "#8e44ad",
+  "Flickr" = "#2c3e50",
+  "Tumblr" = "#c0392b",
+  "Instagram" = "#f39c12",
+  "Facebook" = "#2980b9",
+  "Other" = "#7f8c8d"
+)
+```
+
+
+# Load data
+
+```{r}
+df <- read_csv('results-20191118-185618.csv') %>%
+  mutate(website = factor(website, levels=names(fill_colors)))
+
+df %>% head()
+```
+
+# Static Output
+
+Use a static output for testing.
+
+```{r}
+plot <-
+  ggplot(df %>% filter(month == '2019-08-01'),
+         aes(
+           x = 0,
+           y = num_submissions,
+           fill = website
+         )) +
+  geom_bar(stat = "identity", position=position_fill(reverse = TRUE)) +
+  coord_flip() +
+  scale_fill_manual(values=fill_colors) +
+  labs(
+    title = "Average Reddit Submission Score by Title Length, by Subreddit",
+    subtitle = "via Pushshift/BigQuery. Title data from Jan 2017 to Aug 2019",
+    x = 'Title Length (Characters)',
+    y = 'Average Score for Submissions with Title Length',
+    fill = '',
+    caption = 'Max Woolf — minimaxir.com'
+  ) +
+  facet_wrap(~ subreddit, ncol=10) +
+  theme(strip.text = element_text(size=4),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+
+ggsave('reddit_imgur_static.png',
+       plot,
+       width = 1920/300,
+       height = 1080/300)
+```
+
+
+# LICENSE
+
+MIT License
+
+Copyright (c) 2019 Max Woolf
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
