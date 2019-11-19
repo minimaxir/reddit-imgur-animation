@@ -9,8 +9,6 @@ date: "2019-11-11"
 
 ```{r}
 library(tidyverse)
-library(lubridate)
-library(gganimate)
 
 sessionInfo()
 ```
@@ -36,7 +34,7 @@ theme_set(
       legend.spacing.x = unit(0.1, 'cm'),
       legend.margin = margin(l = 0),
       strip.text = element_text(
-        size = 4.25,
+        size = 4,
         family = "Roboto Condensed Bold",
         color = "#000000"
       ),
@@ -71,7 +69,7 @@ fill_colors <- c(
 Encode the website domains as a factor to order them in the same order as above.
 
 ```{r}
-df <- read_csv('results-20191118-201411.csv') %>%
+df <- read_csv('bq-results-20191118-212500-yb2czgmcbqno.csv') %>%
   mutate(website = factor(website, levels=names(fill_colors)))
 
 df %>% head()
@@ -123,6 +121,24 @@ months <- df %>% pull(month) %>% unique()
 months %>% head()
 ```
 
+For visual ease, keep a consistent order of panels between frames. For intution, make said order equal to subreddit size.
+
+```{r}
+df_agg <- df %>%
+  filter(month >= '2019-01-01') %>%
+  group_by(subreddit) %>%
+  summarize(total = sum(num_submissions)) %>%
+  arrange(desc(total))
+
+df_agg %>% head()
+```
+
+```{r}
+df <-
+  df %>% mutate(subreddit = factor(subreddit, levels = df_agg$subreddit))
+```
+
+
 ```{r}
 render_month <- function(i, frame_path) {
 
@@ -144,9 +160,9 @@ frame <-
     fill = format(filter_date, "%b\n%Y\n"),
     caption = 'Max Woolf — minimaxir.com'
   ) +
-  facet_wrap(~ subreddit, ncol=10)
+  facet_wrap(~ subreddit, ncol=10, drop=F)
 
-ggsave(paste0(frame_path, i, ".png"),
+ggsave(paste0(frame_path, sprintf('%03d', i), ".png"),
      frame,
      width = 1920/300,
      height = 1080/300)
@@ -161,7 +177,7 @@ system.time(temp <- map(1:length(months), render_month, frame_path=frame_path))
 
 The images are rendered to a video using `ffmpeg`:
 
-`ffmpeg  -i %d.png -c:v libx264 -vf fps=4 -pix_fmt yuv420p out.mp4`
+`ffmpeg -r 2 -i %03d.png -c:v libx264 -pix_fmt yuv420p out.mp4`
 
 # LICENSE
 
