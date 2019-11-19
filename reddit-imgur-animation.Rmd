@@ -16,29 +16,49 @@ sessionInfo()
 ```
 
 ```{r}
-theme_set(theme_minimal(base_size=9, base_family="Source Sans Pro") +
-            theme(plot.title = element_text(family="Source Sans Pro Bold", margin=margin(t = -0.1, b = 0.1, unit='cm'), size=12),
-                  axis.title.x = element_text(),
-                  axis.title.y = element_text(),
-                  axis.text.y = element_text(family="Roboto Condensed"),
-                  axis.text.x = element_text(family="Roboto Condensed"),
-                  plot.subtitle = element_text(family="Source Sans Pro Semibold", color="#969696", size=8),
-                  plot.caption = element_text(color="#969696"),
-                  legend.title = element_text(),
-                  legend.key.width = unit(0.25, unit='cm')))
+theme_set(
+  theme_minimal(base_size = 7, base_family = "Source Sans Pro") +
+    theme(
+      plot.title = element_text(
+        family = "Source Sans Pro Bold",
+        margin = margin(t = 0.0, b = 0.1, unit = 'cm'),
+        size = 8
+      ),
+      plot.subtitle = element_text(
+        family = "Source Sans Pro Semibold",
+        color = "#969696",
+        size = 6
+      ),
+      plot.caption = element_text(color = "#969696"),
+      legend.title = element_text(family = "Source Sans Pro Bold",
+                                  size = 15),
+      legend.key.width = unit(0.25, unit = 'cm'),
+      legend.spacing.x = unit(0.1, 'cm'),
+      strip.text = element_text(
+        size = 4,
+        family = "Roboto Condensed Bold",
+        color = "#000000"
+      ),
+      axis.text.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      panel.grid = element_blank()
+    )
+)
 ```
 
 Manually specify the colors and order for each level. Colors adapted from the [Flat UI Colors](https://flatuicolors.com/palette/defo) palette.
 
 ```{r}
 fill_colors <- c(
-  "Reddit" = "#d35400",
+  "Reddit" = "#f39c12",
   "Imgur" = "#27ae60",
-  "Gfycat" = "#16a085",
+  "Gfycat" = "#c0392b",
   "Giphy" = "#8e44ad",
   "Flickr" = "#2c3e50",
-  "Tumblr" = "#c0392b",
-  "Instagram" = "#f39c12",
+  "Tumblr" = "#16a085",
+  "Instagram" = "#d35400",
   "Facebook" = "#2980b9",
   "Other" = "#7f8c8d"
 )
@@ -47,8 +67,10 @@ fill_colors <- c(
 
 # Load data
 
+Encode the website domains as a factor to order them in the same order as above.
+
 ```{r}
-df <- read_csv('results-20191118-185618.csv') %>%
+df <- read_csv('results-20191118-201411.csv') %>%
   mutate(website = factor(website, levels=names(fill_colors)))
 
 df %>% head()
@@ -59,8 +81,10 @@ df %>% head()
 Use a static output for testing.
 
 ```{r}
+filter_date <- '2019-08-01'
+
 plot <-
-  ggplot(df %>% filter(month == '2019-08-01'),
+  ggplot(df %>% filter(month == filter_date),
          aes(
            x = 0,
            y = num_submissions,
@@ -70,19 +94,12 @@ plot <-
   coord_flip() +
   scale_fill_manual(values=fill_colors) +
   labs(
-    title = "Average Reddit Submission Score by Title Length, by Subreddit",
-    subtitle = "via Pushshift/BigQuery. Title data from Jan 2017 to Aug 2019",
-    x = 'Title Length (Characters)',
-    y = 'Average Score for Submissions with Title Length',
-    fill = '',
+    title = "The Rise (and Fall) of Imgur on Reddit Over Time",
+    subtitle = "Charts display proportions of all submissions to subreddit linking to website at month/year. Data via Pushshift/BigQuery.",
+    fill = format(as.Date(filter_date), "%b\n%Y\n"),
     caption = 'Max Woolf — minimaxir.com'
   ) +
-  facet_wrap(~ subreddit, ncol=10) +
-  theme(strip.text = element_text(size=4),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank())
+  facet_wrap(~ subreddit, ncol=10)
 
 ggsave('reddit_imgur_static.png',
        plot,
