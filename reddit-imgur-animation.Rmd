@@ -34,8 +34,9 @@ theme_set(
                                   size = 15),
       legend.key.width = unit(0.25, unit = 'cm'),
       legend.spacing.x = unit(0.1, 'cm'),
+      legend.margin = margin(l = 0),
       strip.text = element_text(
-        size = 4,
+        size = 4.25,
         family = "Roboto Condensed Bold",
         color = "#000000"
       ),
@@ -95,7 +96,7 @@ plot <-
   scale_fill_manual(values=fill_colors) +
   labs(
     title = "The Rise (and Fall) of Imgur on Reddit Over Time",
-    subtitle = "Charts display proportions of all submissions to subreddit linking to website at month/year. Data via Pushshift/BigQuery.",
+    subtitle = "Charts display proportions of all submissions to subreddit linking to website at month/year. Data via Pushshift/BigQuery. Made with R/ggplot2",
     fill = format(as.Date(filter_date), "%b\n%Y\n"),
     caption = 'Max Woolf — minimaxir.com'
   ) +
@@ -107,6 +108,60 @@ ggsave('reddit_imgur_static.png',
        height = 1080/300)
 ```
 
+# Animation
+
+gganimate is overkill, so save each frame and stitch them together using ffmpeg.
+
+```{r}
+frame_path <- "/Users/maxwoolf/Desktop/reddit-imgur/"
+```
+
+
+```{r}
+months <- df %>% pull(month) %>% unique()
+
+months %>% head()
+```
+
+```{r}
+render_month <- function(i, frame_path) {
+
+filter_date <- months[i]  
+
+frame <-
+  ggplot(df %>% filter(month == filter_date),
+         aes(
+           x = 0,
+           y = num_submissions,
+           fill = website
+         )) +
+  geom_bar(stat = "identity", position=position_fill(reverse = TRUE)) +
+  coord_flip() +
+  scale_fill_manual(values=fill_colors) +
+  labs(
+    title = "The Rise (and Fall) of Imgur on Reddit Over Time",
+    subtitle = "Charts display proportions of all submissions to subreddit linking to website at month/year. Data via Pushshift/BigQuery. Made with R/ggplot2.",
+    fill = format(filter_date, "%b\n%Y\n"),
+    caption = 'Max Woolf — minimaxir.com'
+  ) +
+  facet_wrap(~ subreddit, ncol=10)
+
+ggsave(paste0(frame_path, i, ".png"),
+     frame,
+     width = 1920/300,
+     height = 1080/300)
+}
+
+render_month(1, frame_path)
+```
+
+```{r}
+system.time(temp <- map(1:length(months), render_month, frame_path=frame_path))
+```
+
+The images are rendered to a video using `ffmpeg`:
+
+`ffmpeg  -i %d.png -c:v libx264 -vf fps=4 -pix_fmt yuv420p out.mp4`
 
 # LICENSE
 
