@@ -24,15 +24,14 @@ SELECT
   DATE(TIMESTAMP_TRUNC(TIMESTAMP_SECONDS(created_utc), MONTH)) AS month,
   subreddit,
   CASE
-    WHEN REGEXP_CONTAINS(domain, 'reddituploads.com|redd.it') THEN "Reddit"
-    WHEN REGEXP_CONTAINS(domain, 'imgur.com') THEN "Imgur"
+    WHEN REGEXP_CONTAINS(domain, 'reddituploads|redd.it') THEN "Reddit"
+    WHEN REGEXP_CONTAINS(domain, 'imgur') THEN "Imgur"
     WHEN REGEXP_CONTAINS(domain, 'gfycat') THEN "Gfycat"
     WHEN REGEXP_CONTAINS(domain, 'giphy') THEN "Giphy"
     WHEN REGEXP_CONTAINS(domain, 'flickr') THEN "Flickr"
     WHEN REGEXP_CONTAINS(domain, 'tumblr') THEN "Tumblr"
     WHEN REGEXP_CONTAINS(domain, 'instagram') THEN "Instagram"
     WHEN REGEXP_CONTAINS(domain, 'facebook') THEN "Facebook"
---   WHEN REGEXP_CONTAINS(domain, 'self.') THEN "(Self Post)"
   ELSE
   "Other"
 END
