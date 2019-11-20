@@ -2,7 +2,7 @@
 
 ![](reddit_imgur_static.png)
 
-R + ggplot2 code for an animation of Reddit data.
+R + ggplot2 code for an animation of Imgur's decline on Reddit in favor of Reddit's self-hosted image service.
 
 The BigQuery to obtain the Reddit data (`bq-results-20191118-212500-yb2czgmcbqno.csv`) is available in the SQL file `subreddit_image_domains.sql`.
 
