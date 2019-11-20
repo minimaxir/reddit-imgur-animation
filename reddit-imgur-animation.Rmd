@@ -1,8 +1,10 @@
 ---
-title: "Reddit Imgur Animation"
+title: "The Rise (and Fall) of Imgur on Reddit Over Time"
 author: "Max Woolf (@minimaxir)"
-date: "2019-11-11"
-
+date: "2019-11-19"
+output: 
+  html_document:
+    keep_md: true
 ---
 
 ## Setup
@@ -64,15 +66,50 @@ fill_colors <- c(
 ```
 
 
-# Load data
+# Setup
 
 Encode the website domains as a factor to order them in the same order as above.
 
+Additionally, filter out subreddits/months with fewer than 10 total submissions to avoid random blips.
+
 ```{r}
 df <- read_csv('bq-results-20191118-212500-yb2czgmcbqno.csv') %>%
-  mutate(website = factor(website, levels=names(fill_colors)))
+  mutate(website = factor(website, levels=names(fill_colors))) %>%
+  group_by(month, subreddit) %>%
+  mutate(total_month_subreddit = sum(num_submissions)) %>%
+  ungroup() %>%
+  filter(total_month_subreddit >= 10)
 
 df %>% head()
+```
+
+gganimate is overkill, so save each frame and stitch them together using ffmpeg.
+
+```{r}
+frame_path <- "/Users/maxwoolf/Desktop/reddit-imgur/"
+```
+
+
+```{r}
+months <- df %>% pull(month) %>% unique()
+
+months %>% head()
+```
+
+For visual ease, keep a consistent order of panels between frames. For intution, make said order equal to the first appearence of the subreddit in the dataset, to give a "waterfall" impression.
+
+```{r}
+df_agg <- df %>%
+  group_by(subreddit) %>%
+  summarize(first_month = min(month)) %>%
+  arrange(first_month)
+
+df_agg %>% head()
+```
+
+```{r}
+df <-
+  df %>% mutate(subreddit = factor(subreddit, levels = df_agg$subreddit))
 ```
 
 # Static Output
@@ -94,9 +131,9 @@ plot <-
   scale_fill_manual(values=fill_colors) +
   labs(
     title = "The Rise (and Fall) of Imgur on Reddit Over Time",
-    subtitle = "Charts display proportions of all submissions to subreddit linking to website at month/year. Data via Pushshift/BigQuery. Made with R/ggplot2",
+    subtitle = "Charts display proportions of all submissions to subreddit linking to website at month/year. Data via Pushshift/BigQuery. Made with R/ggplot2.",
     fill = format(as.Date(filter_date), "%b\n%Y\n"),
-    caption = 'Max Woolf — minimaxir.com'
+    caption = 'Max Woolf (@minimaxir)'
   ) +
   facet_wrap(~ subreddit, ncol=10)
 
@@ -107,37 +144,6 @@ ggsave('reddit_imgur_static.png',
 ```
 
 # Animation
-
-gganimate is overkill, so save each frame and stitch them together using ffmpeg.
-
-```{r}
-frame_path <- "/Users/maxwoolf/Desktop/reddit-imgur/"
-```
-
-
-```{r}
-months <- df %>% pull(month) %>% unique()
-
-months %>% head()
-```
-
-For visual ease, keep a consistent order of panels between frames. For intution, make said order equal to subreddit size.
-
-```{r}
-df_agg <- df %>%
-  filter(month >= '2019-01-01') %>%
-  group_by(subreddit) %>%
-  summarize(total = sum(num_submissions)) %>%
-  arrange(desc(total))
-
-df_agg %>% head()
-```
-
-```{r}
-df <-
-  df %>% mutate(subreddit = factor(subreddit, levels = df_agg$subreddit))
-```
-
 
 ```{r}
 render_month <- function(i, frame_path) {
@@ -158,7 +164,7 @@ frame <-
     title = "The Rise (and Fall) of Imgur on Reddit Over Time",
     subtitle = "Charts display proportions of all submissions to subreddit linking to website at month/year. Data via Pushshift/BigQuery. Made with R/ggplot2.",
     fill = format(filter_date, "%b\n%Y\n"),
-    caption = 'Max Woolf — minimaxir.com'
+    caption = 'Max Woolf (@minimaxir)'
   ) +
   facet_wrap(~ subreddit, ncol=10, drop=F)
 
@@ -175,9 +181,9 @@ render_month(1, frame_path)
 system.time(temp <- map(1:length(months), render_month, frame_path=frame_path))
 ```
 
-The images are rendered to a video using `ffmpeg`:
+The still frames are rendered to a video using `ffmpeg`:
 
-`ffmpeg -r 2 -i %03d.png -c:v libx264 -pix_fmt yuv420p out.mp4`
+`ffmpeg -r 4 -i %03d.png -c:v libx264 -pix_fmt yuv420p out.mp4`
 
 # LICENSE
 
