@@ -1,6 +1,10 @@
 # reddit-imgur-animation
 
-R + ggplot2 code for a imgur animation.
+![](reddit_imgur_static.png)
+
+R + ggplot2 code for an animation of Reddit data.
+
+The BigQuery to obtain the Reddit data (`bq-results-20191118-212500-yb2czgmcbqno.csv`) is available in the SQL file `subreddit_image_domains.sql`.
 
 ## Maintainer/Creator
 
