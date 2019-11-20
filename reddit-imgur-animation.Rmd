@@ -2,9 +2,7 @@
 title: "The Rise (and Fall) of Imgur on Reddit Over Time"
 author: "Max Woolf (@minimaxir)"
 date: "2019-11-19"
-output: 
-  html_document:
-    keep_md: true
+output: github_document
 ---
 
 ## Setup
